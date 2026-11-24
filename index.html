@@ -120,8 +120,8 @@ body{margin:0;background:#eef5f8;color:#17324d;font-family:Arial,Helvetica,sans-
 
 <section class="card hero">
     <img class="hero-bg"
-      src="https://images.unsplash.com/photo-1512813195386-6cf811ad3542?auto=format&fit=crop&w=1600&q=85"
-      alt="Beautiful tropical beach in Mexico">
+      src="https://images.pexels.com/photos/20210509/pexels-photo-20210509.jpeg?auto=compress&cs=tinysrgb&w=1800"
+      alt="Aerial view of a Cancun beachfront resort and turquoise Caribbean water">
     <div class="hero-content">
       <div class="kicker">MEXICO HOTEL TRAVEL PRESENTATION</div>
       <h1>Escape to Beautiful Mexico</h1>
@@ -131,8 +131,8 @@ body{margin:0;background:#eef5f8;color:#17324d;font-family:Arial,Helvetica,sans-
   </section>
 
   <section class="welcome card">
-    <h2>Welcome &amp; Thank You for Joining</h2>
-    <p>Your Hotel Stay Certificate will be released via email after the session.</p>
+    <h2>Welcome!</h2>
+    <p>Simply participate in our travel webinar, where we’ll demo our booking platform and show you how to access zero-markup travel deals. Watch our 45-minute travel presentation, and as a thank-you for your time, we’ll gift you a <strong>Mexico Hotel Stay Certificate for two.</strong></p>
     <div class="pulse-notice" role="note" aria-label="Certificate requirements">
       <strong>NO FEE TO ATTEND</strong>
       <p>You do not need to pay anything in order to receive your Hotel Stay Certificate. Stay until the end of the presentation, which takes approximately 45 minutes, and your certificate will be emailed to you.</p>
@@ -149,7 +149,7 @@ body{margin:0;background:#eef5f8;color:#17324d;font-family:Arial,Helvetica,sans-
 
   <section class="card start-card">
     <h2>Ready to Join?</h2>
-    <p>Start the live presentation when it is available, or reserve a spot for another session.</p>
+    <p>Join our 45-minute travel platform demo and receive your Mexico Hotel Stay Certificate as our thank-you.</p>
     <button class="start-btn schedule-start" id="startBtnTop" type="button">JOIN THE LIVE PRESENTATION →</button>
     <button class="reserve-btn" id="reserveBtnTop" type="button">RESERVE A SPOT FOR ANOTHER SESSION →</button>
   </section>
@@ -178,8 +178,8 @@ body{margin:0;background:#eef5f8;color:#17324d;font-family:Arial,Helvetica,sans-
 
   <section class="card section">
     <img class="hotel-photo"
-      src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=85"
-      alt="Tropical Mexican beach resort destination">
+      src="https://images.pexels.com/photos/20210503/pexels-photo-20210503.jpeg?auto=compress&cs=tinysrgb&w=1600"
+      alt="Beachfront hotel resort along the coast of Cancun, Mexico">
     <h2>Mexico Hotel Stay for 2</h2>
     <p class="section-intro">Choose from some of Mexico's most popular vacation destinations.</p>
     <ul class="benefits">
@@ -281,7 +281,12 @@ function closeModal(){
   document.body.style.overflow="";
 }
 
-const RESERVATION_URL="https://aloha-hawaii-tours.github.io/spot-reservation/";
+const RESERVATION_URL="https://aht-travel.github.io/reserve-spot/";
+const START_HOUR=12;
+const START_MINUTE=45;
+const END_HOUR=19;
+const END_MINUTE=45;
+
 const startButtons=[
   document.getElementById("startBtnTop"),
   document.getElementById("startBtnAfterSurvey"),
@@ -295,35 +300,53 @@ const reserveButtons=[
 const ctaStatus=document.getElementById("ctaStatus");
 
 function isPresentationWindowOpen(){
-  // Presentation access window: 1:45 PM–8:44 PM Eastern Time.
+  // Eastern Time; America/New_York automatically handles EST and EDT.
   const parts=new Intl.DateTimeFormat("en-US",{
-    timeZone:"America/New_York",hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+    timeZone:"America/New_York",
+    hour:"2-digit",
+    minute:"2-digit",
+    hourCycle:"h23"
   }).formatToParts(new Date());
+
   const hour=Number(parts.find(p=>p.type==="hour").value);
   const minute=Number(parts.find(p=>p.type==="minute").value);
-  const time=hour*60+minute;
-  return time>=13*60+45 && time<=20*60+44;
+  const currentMinutes=hour*60+minute;
+  const startMinutes=START_HOUR*60+START_MINUTE;
+  const endMinutes=END_HOUR*60+END_MINUTE;
+
+  // Active at 12:45 PM; inactive beginning at 7:45 PM Eastern.
+  return currentMinutes>=startMinutes && currentMinutes<endMinutes;
 }
 
 function updateScheduleButtons(){
   const live=isPresentationWindowOpen();
+
   startButtons.forEach(button=>{
+    if(!button)return;
     button.disabled=!live;
     button.textContent=live
       ? "JOIN THE LIVE PRESENTATION →"
       : "LIVE PRESENTATION UNAVAILABLE RIGHT NOW";
     button.setAttribute("aria-disabled",String(!live));
   });
-  // Reserve buttons intentionally remain active at all times, including while live.
+
+  // Reservation is available outside the live presentation window.
   reserveButtons.forEach(button=>{
-    button.disabled=false;
+    if(!button)return;
+    button.disabled=live;
     button.textContent="RESERVE A SPOT FOR ANOTHER SESSION →";
-    button.setAttribute("aria-disabled","false");
+    button.setAttribute("aria-disabled",String(live));
   });
+
   if(ctaStatus){
     ctaStatus.textContent=live
-      ? "The live presentation is available now. You can also reserve a spot for another session anytime."
-      : "The live presentation isn't available right now. You can reserve a spot for another session anytime.";
+      ? "The live presentation is available now."
+      : "The live presentation isn't available right now. You can reserve a spot for another session.";
+  }
+
+  // Close the join flow automatically if the live window ends.
+  if(!live && modal.classList.contains("open")){
+    closeModal();
   }
 }
 
@@ -336,13 +359,12 @@ startButtons.forEach(button=>button.addEventListener("click",()=>{
 }));
 
 reserveButtons.forEach(button=>button.addEventListener("click",()=>{
-  // Direct navigation makes each Reserve Your Spot button work independently.
+  if(isPresentationWindowOpen())return;
   window.location.assign(RESERVATION_URL);
 }));
 
-document.getElementById("closeBtn").addEventListener("click",closeModal);
 updateScheduleButtons();
-setInterval(updateScheduleButtons,15000);
+setInterval(updateScheduleButtons,10000);
 
 modal.addEventListener("click",e=>{
   if(e.target===modal)closeModal()
@@ -353,11 +375,21 @@ document.addEventListener("keydown",e=>{
 });
 
 document.getElementById("safetyContinue").addEventListener("click",()=>{
+  if(!isPresentationWindowOpen()){
+    closeModal();
+    updateScheduleButtons();
+    return;
+  }
   safety.style.display="none";
   choices.style.display="block";
 });
 
 document.getElementById("mobileChoice").addEventListener("click",()=>{
+  if(!isPresentationWindowOpen()){
+    closeModal();
+    updateScheduleButtons();
+    return;
+  }
   window.location.href=MOBILE_LINK;
 });
 
